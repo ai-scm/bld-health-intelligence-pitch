@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motor de Asignación de Salud — Demo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0f1923; color: #e0e6ed; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(90deg, #0a2540 0%, #1a4a7a 100%);
+    padding: 14px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 2px solid #2d6cba;
+  }
+  .header h1 { font-size: 1.1rem; font-weight: 600; color: #7ec8e3; letter-spacing: 1px; }
+  .header .badge { background: #1db954; color: #fff; font-size: 0.7rem; padding: 3px 10px; border-radius: 12px; font-weight: 700; }
+
+  .main { display: grid; grid-template-columns: 380px 1fr; height: calc(100vh - 56px); }
+
+  /* PANEL IZQUIERDO */
+  .panel { background: #131f2e; padding: 20px; overflow-y: auto; border-right: 1px solid #1e3a5a; }
+  .panel h2 { font-size: 0.85rem; color: #7ec8e3; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 0.78rem; color: #8fa8c0; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 9px 12px;
+    background: #1a2d42; border: 1px solid #2d4a6a; border-radius: 6px;
+    color: #e0e6ed; font-size: 0.9rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: #2d6cba; }
+  .form-group select option { background: #1a2d42; }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .tag {
+    padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; cursor: pointer;
+    border: 1px solid #2d4a6a; background: #1a2d42; color: #8fa8c0;
+    transition: all 0.15s;
+  }
+  .tag.active { background: #1a4a7a; border-color: #2d6cba; color: #7ec8e3; }
+  .tag:hover { border-color: #4a8ac0; }
+
+  .btn-asignar {
+    width: 100%; padding: 13px; margin-top: 18px;
+    background: linear-gradient(90deg, #1db954, #17a045);
+    border: none; border-radius: 8px; color: #fff;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    letter-spacing: 1px; transition: opacity 0.2s;
+  }
+  .btn-asignar:hover { opacity: 0.88; }
+  .btn-asignar:disabled { background: #2d4a6a; cursor: not-allowed; opacity: 0.6; }
+
+  .divider { border: none; border-top: 1px solid #1e3a5a; margin: 20px 0; }
+
+  /* RESULTADO */
+  .result-box { display: none; background: #0d1f30; border: 1px solid #2d6cba; border-radius: 10px; padding: 16px; }
+  .result-box.visible { display: block; }
+  .result-title { font-size: 0.75rem; color: #7ec8e3; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+  .result-ips { font-size: 1.05rem; font-weight: 700; color: #1db954; margin-bottom: 4px; }
+  .result-address { font-size: 0.8rem; color: #8fa8c0; margin-bottom: 14px; }
+
+  .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .metric { background: #131f2e; border-radius: 8px; padding: 10px 12px; text-align: center; }
+  .metric .value { font-size: 1.3rem; font-weight: 700; color: #7ec8e3; }
+  .metric .label { font-size: 0.7rem; color: #5a7a9a; margin-top: 2px; }
+
+  .score-bar { margin-bottom: 14px; }
+  .score-bar .score-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #8fa8c0; margin-bottom: 4px; }
+  .score-bar .bar { height: 6px; background: #1a2d42; border-radius: 3px; overflow: hidden; }
+  .score-bar .fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+  .fill-green { background: linear-gradient(90deg, #1db954, #17e06a); }
+  .fill-blue { background: linear-gradient(90deg, #2d6cba, #7ec8e3); }
+  .fill-orange { background: linear-gradient(90deg, #e07a20, #f0a850); }
+
+  .slot-box { background: #1a2d42; border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+  .slot-dot { width: 10px; height: 10px; border-radius: 50%; background: #1db954; flex-shrink: 0; }
+  .slot-text { font-size: 0.85rem; }
+  .slot-text strong { color: #1db954; }
+
+  .alternatives { margin-top: 14px; }
+  .alternatives h3 { font-size: 0.75rem; color: #5a7a9a; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .alt-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 10px; border-radius: 6px; background: #131f2e;
+    margin-bottom: 6px; cursor: pointer; transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+  .alt-item:hover { background: #1a2d42; border-color: #2d4a6a; }
+  .alt-name { font-size: 0.82rem; color: #c0d4e8; }
+  .alt-dist { font-size: 0.75rem; color: #5a7a9a; }
+  .alt-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; }
+  .badge-yellow { background: #3a2a00; color: #f0c030; }
+  .badge-red { background: #3a0a0a; color: #e05050; }
+
+  .reset-btn {
+    width: 100%; padding: 8px; margin-top: 12px;
+    background: transparent; border: 1px solid #2d4a6a; border-radius: 6px;
+    color: #5a7a9a; font-size: 0.82rem; cursor: pointer; transition: all 0.15s;
+  }
+  .reset-btn:hover { border-color: #4a8ac0; color: #7ec8e3; }
+
+  /* MAPA */
+  #map { width: 100%; height: 100%; }
+
+  /* POPUP LEAFLET */
+  .leaflet-popup-content-wrapper { background: #131f2e; border: 1px solid #2d6cba; color: #e0e6ed; border-radius: 8px; }
+  .leaflet-popup-tip { background: #131f2e; }
+  .popup-title { font-weight: 700; font-size: 0.9rem; color: #7ec8e3; margin-bottom: 4px; }
+  .popup-detail { font-size: 0.78rem; color: #8fa8c0; line-height: 1.6; }
+  .popup-slot { color: #1db954; font-weight: 600; }
+
+  /* LOADING */
+  .loading { display: none; text-align: center; padding: 20px; color: #5a7a9a; font-size: 0.85rem; }
+  .loading.visible { display: block; }
+  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid #2d4a6a; border-top-color: #2d6cba; border-radius: 50%; animation: spin 0.7s linear infinite; margin-bottom: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: #1db954; color: #fff; padding: 12px 20px;
+    border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+    transform: translateY(60px); opacity: 0; transition: all 0.3s;
+    z-index: 9999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏥 PLATAFORMA SALUD INTELIGENTE — Motor de Asignación</h1>
+  <span class="badge">DEMO SINTÉTICO</span>
+</div>
+
+<div class="main">
+  <!-- PANEL IZQUIERDO -->
+  <div class="panel">
+    <h2>Datos del Paciente</h2>
+
+    <div class="form-group">
+      <label>Nombre</label>
+      <input type="text" id="nombre" placeholder="Ej. Juan García López" value="María Elena Torres Vega"/>
+    </div>
+
+    <div class="form-group">
+      <label>Zona / Alcaldía</label>
+      <select id="zona">
+        <option value="ecatepec">Ecatepec de Morelos</option>
+        <option value="iztapalapa">Iztapalapa</option>
+        <option value="gustavo">Gustavo A. Madero</option>
+        <option value="tlalnepantla">Tlalnepantla</option>
+        <option value="neza">Nezahualcóyotl</option>
+        <option value="xochimilco">Xochimilco</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Diagnósticos principales</label>
+      <div class="tags" id="diag-tags">
+        <span class="tag active" data-val="diabetes">Diabetes Tipo 2</span>
+        <span class="tag active" data-val="hipertension">Hipertensión</span>
+        <span class="tag" data-val="renal">Insuf. Renal</span>
+        <span class="tag" data-val="cardiaco">Riesgo Cardiaco</span>
+        <span class="tag" data-val="dengue">Dengue</span>
+        <span class="tag" data-val="materno">Control Materno</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Especialidad requerida</label>
+      <select id="especialidad">
+        <option value="endocrinologia">Endocrinología</option>
+        <option value="cardiologia">Cardiología</option>
+        <option value="nefrologia">Nefrología</option>
+        <option value="medicina_interna">Medicina Interna</option>
+        <option value="ginecologia">Ginecología / Obstetricia</option>
+        <option value="urgencias">Urgencias</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Tipo de servicio</label>
+      <select id="servicio">
+        <option value="presencial">Presencial</option>
+        <option value="teleconsulta">Teleconsulta</option>
+        <option value="urgencia">Urgencia</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Movilidad reducida / Accesibilidad</label>
+      <select id="accesibilidad">
+        <option value="no">No requiere</option>
+        <option value="si">Sí — requiere IPS accesible</option>
+      </select>
+    </div>
+
+    <button class="btn-asignar" id="btn-asignar" onclick="asignar()">
+      ⚡ ASIGNAR CITA
+    </button>
+
+    <hr class="divider"/>
+
+    <!-- LOADING -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div>Calculando asignación óptima...</div>
+      <div style="font-size:0.72rem; margin-top:4px; color:#3a5a7a">Evaluando 12 IPS · Aplicando 8 reglas · Optimizando ruta</div>
+    </div>
+
+    <!-- RESULTADO -->
+    <div class="result-box" id="result-box">
+      <div class="result-title">✅ Asignación Confirmada</div>
+      <div class="result-ips" id="res-nombre"></div>
+      <div class="result-address" id="res-address"></div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="value" id="res-dist">—</div>
+          <div class="label">Distancia (km)</div>
+        </div>
+        <div class="metric">
+          <div class="value" id="res-tiempo">—</div>
+          <div class="label">Tiempo traslado</div>
+        </div>
+        <div class="metric">
+          <div class="value" id="res-score">—</div>
+          <div class="label">Score asignación</div>
+        </div>
+        <div class="metric">
+          <div class="value" id="res-cap">—</div>
+          <div class="label">Capacidad libre</div>
+        </div>
+      </div>
+
+      <div class="score-bar">
+        <div class="score-label"><span>Proximidad</span><span id="sc-prox">—</span></div>
+        <div class="bar"><div class="fill fill-green" id="bar-prox" style="width:0%"></div></div>
+      </div>
+      <div class="score-bar">
+        <div class="score-label"><span>Disponibilidad especialista</span><span id="sc-disp">—</span></div>
+        <div class="bar"><div class="fill fill-blue" id="bar-disp" style="width:0%"></div></div>
+      </div>
+      <div class="score-bar">
+        <div class="score-label"><span>Carga balanceada</span><span id="sc-carga">—</span></div>
+        <div class="bar"><div class="fill fill-orange" id="bar-carga" style="width:0%"></div></div>
+      </div>
+
+      <div class="slot-box">
+        <div class="slot-dot"></div>
+        <div class="slot-text">Próximo slot disponible: <strong id="res-slot">—</strong></div>
+      </div>
+
+      <div class="alternatives">
+        <h3>Alternativas evaluadas</h3>
+        <div id="alternatives-list"></div>
+      </div>
+
+      <button class="reset-btn" onclick="resetForm()">↩ Nueva asignación</button>
+    </div>
+  </div>
+
+  <!-- MAPA -->
+  <div id="map"></div>
+</div>
+
+<div class="toast" id="toast">✅ Notificación enviada al paciente</div>
+
+<script>
+// ─── DATOS SINTÉTICOS ──────────────────────────────────────────────────────
+
+const ZONAS = {
+  ecatepec:    { lat: 19.601, lng: -99.051, nombre: "Ecatepec de Morelos" },
+  iztapalapa:  { lat: 19.357, lng: -99.063, nombre: "Iztapalapa" },
+  gustavo:     { lat: 19.494, lng: -99.109, nombre: "Gustavo A. Madero" },
+  tlalnepantla:{ lat: 19.540, lng: -99.196, nombre: "Tlalnepantla" },
+  neza:        { lat: 19.402, lng: -89.023, nombre: "Nezahualcóyotl" },
+  xochimilco:  { lat: 19.257, lng: -99.102, nombre: "Xochimilco" },
+};
+// corregir neza
+ZONAS.neza = { lat: 19.402, lng: -99.023, nombre: "Nezahualcóyotl" };
+
+const IPS = [
+  { id:1, nombre:"IMSS UMF 68 — Ecatepec",        lat:19.615, lng:-99.047, accesible:true,
+    especialidades:["endocrinologia","medicina_interna","urgencias"],
+    capacidad:78, slots:["Jue 5 jun 09:00","Vie 6 jun 11:30","Lun 9 jun 08:00"] },
+  { id:2, nombre:"IMSS HGZ 57 — Ecatepec",         lat:19.588, lng:-99.062, accesible:true,
+    especialidades:["endocrinologia","cardiologia","nefrologia","urgencias"],
+    capacidad:55, slots:["Mié 4 jun 14:00","Jue 5 jun 10:30"] },
+  { id:3, nombre:"IMSS UMF 94 — Gustavo A. Madero",lat:19.488, lng:-99.118, accesible:false,
+    especialidades:["medicina_interna","ginecologia","urgencias"],
+    capacidad:82, slots:["Vie 6 jun 09:00","Lun 9 jun 10:00"] },
+  { id:4, nombre:"ISSSTE Clínica 1 — Lindavista",  lat:19.497, lng:-99.140, accesible:true,
+    especialidades:["endocrinologia","cardiologia","medicina_interna"],
+    capacidad:61, slots:["Jue 5 jun 15:30","Vie 6 jun 08:30"] },
+  { id:5, nombre:"IMSS-Bienestar CS Iztapalapa",   lat:19.362, lng:-99.071, accesible:true,
+    especialidades:["medicina_interna","ginecologia","urgencias"],
+    capacidad:89, slots:["Mié 4 jun 16:00","Jue 5 jun 09:30"] },
+  { id:6, nombre:"IMSS UMF 77 — Nezahualcóyotl",   lat:19.408, lng:-99.027, accesible:false,
+    especialidades:["endocrinologia","nefrologia","medicina_interna"],
+    capacidad:44, slots:["Lun 9 jun 09:00","Mar 10 jun 11:00"] },
+  { id:7, nombre:"HG Regional Tlalnepantla",        lat:19.545, lng:-99.201, accesible:true,
+    especialidades:["cardiologia","nefrologia","endocrinologia","urgencias"],
+    capacidad:67, slots:["Jue 5 jun 08:00","Vie 6 jun 13:00"] },
+  { id:8, nombre:"IMSS UMF 161 — Xochimilco",      lat:19.262, lng:-99.098, accesible:true,
+    especialidades:["ginecologia","medicina_interna","urgencias"],
+    capacidad:71, slots:["Mié 4 jun 10:00","Jue 5 jun 14:30"] },
+];
+
+const SLOTS_TELECON = [
+  "Hoy 17:00 (teleconsulta)","Hoy 18:30 (teleconsulta)",
+  "Mié 4 jun 09:00 (teleconsulta)","Jue 5 jun 11:00 (teleconsulta)"
+];
+
+// ─── MAPA ──────────────────────────────────────────────────────────────────
+
+const map = L.map('map', { zoomControl: true }).setView([19.48, -99.10], 11);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap · © CARTO',
+  maxZoom: 18
+}).addTo(map);
+
+// Iconos
+function makeIcon(color, size=14) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:${size}px;height:${size}px;background:${color};border:2px solid rgba(255,255,255,0.5);border-radius:50%;box-shadow:0 0 8px ${color}66"></div>`,
+    iconSize: [size, size], iconAnchor: [size/2, size/2]
+  });
+}
+function makeIpsIcon(cap, available) {
+  const color = !available ? '#e05050' : cap > 70 ? '#1db954' : cap > 50 ? '#f0c030' : '#e07a20';
+  return makeIcon(color, 16);
+}
+function makePacienteIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:20px;height:20px;background:#7ec8e3;border:3px solid #fff;border-radius:50%;box-shadow:0 0 12px #7ec8e380;display:flex;align-items:center;justify-content:center;font-size:10px">👤</div>`,
+    iconSize: [20,20], iconAnchor:[10,10]
+  });
+}
+
+// Markers de IPS siempre visibles
+let ipsMarkers = {};
+IPS.forEach(ips => {
+  const m = L.marker([ips.lat, ips.lng], { icon: makeIpsIcon(ips.capacidad, true) })
+    .addTo(map)
+    .bindPopup(`<div class="popup-title">${ips.nombre}</div>
+      <div class="popup-detail">
+        Capacidad libre: ${ips.capacidad}%<br>
+        Especialidades: ${ips.especialidades.join(', ')}<br>
+        Accesible: ${ips.accesible ? '✅' : '—'}
+      </div>`);
+  ipsMarkers[ips.id] = m;
+});
+
+let pacienteMarker = null;
+let routeLine = null;
+let resultMarker = null;
+
+// ─── HAVERSINE ─────────────────────────────────────────────────────────────
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ─── MOTOR DE ASIGNACIÓN ───────────────────────────────────────────────────
+
+function calcScore(ips, zona, especialidad, accesibilidad) {
+  const dist = haversine(zona.lat, zona.lng, ips.lat, ips.lng);
+  const tieneEsp = ips.especialidades.includes(especialidad);
+  if (!tieneEsp) return null;
+  if (accesibilidad === 'si' && !ips.accesible) return null;
+
+  let score = 100;
+  // S1: distancia (-5 por km, máx penalización 40)
+  score -= Math.min(dist * 5, 40);
+  // S2: capacidad libre (+15 si > 70%)
+  if (ips.capacidad > 70) score += 15;
+  else if (ips.capacidad < 50) score -= 10;
+  // S3: accesibilidad (+5 si es accesible)
+  if (ips.accesible) score += 5;
+  // S4: slots próximos
+  if (ips.slots.length > 0) {
+    const slotDia = ips.slots[0].includes('Mié 4') || ips.slots[0].includes('Hoy') ? 8 : 0;
+    score += slotDia;
+  }
+  return { score: Math.round(score), dist: Math.round(dist*10)/10, ips };
+}
+
+function asignar() {
+  const zona = ZONAS[document.getElementById('zona').value];
+  const especialidad = document.getElementById('especialidad').value;
+  const accesibilidad = document.getElementById('accesibilidad').value;
+  const servicio = document.getElementById('servicio').value;
+
+  document.getElementById('btn-asignar').disabled = true;
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('result-box').classList.remove('visible');
+
+  // Mover mapa al paciente
+  if (pacienteMarker) map.removeLayer(pacienteMarker);
+  pacienteMarker = L.marker([zona.lat, zona.lng], { icon: makePacienteIcon() })
+    .addTo(map)
+    .bindPopup(`<div class="popup-title">👤 Paciente</div><div class="popup-detail">${zona.nombre}</div>`)
+    .openPopup();
+
+  setTimeout(() => {
+    // Calcular scores
+    let resultados = [];
+    IPS.forEach(ips => {
+      const r = calcScore(ips, zona, especialidad, accesibilidad);
+      if (r) resultados.push(r);
+    });
+
+    // Teleconsulta: no requiere IPS física
+    if (servicio === 'teleconsulta') {
+      mostrarResultadoTele(zona, especialidad);
+      return;
+    }
+
+    if (resultados.length === 0) {
+      alert('No hay IPS disponibles para los criterios seleccionados. Intente cambiar especialidad o zona.');
+      resetLoading();
+      return;
+    }
+
+    resultados.sort((a,b) => b.score - a.score);
+    mostrarResultado(resultados, zona, especialidad);
+  }, 1800);
+}
+
+function mostrarResultado(resultados, zona, especialidad) {
+  const best = resultados[0];
+  const ips = best.ips;
+  const dist = best.dist;
+  const tiempo = Math.round(dist * 4 + 8); // aprox min en transporte
+
+  // Limpiar línea anterior
+  if (routeLine) map.removeLayer(routeLine);
+  if (resultMarker) map.removeLayer(resultMarker);
+
+  // Línea paciente → IPS
+  routeLine = L.polyline([[zona.lat, zona.lng],[ips.lat, ips.lng]], {
+    color: '#1db954', weight: 2.5, dashArray: '6,6', opacity: 0.8
+  }).addTo(map);
+
+  // Resaltar IPS asignada
+  resultMarker = L.marker([ips.lat, ips.lng], { icon: makeIcon('#1db954', 22) })
+    .addTo(map)
+    .bindPopup(`
+      <div class="popup-title">✅ ${ips.nombre}</div>
+      <div class="popup-detail">
+        Distancia: ${dist} km · ${tiempo} min<br>
+        Especialidad: ${especialidad.replace('_',' ')}<br>
+        <span class="popup-slot">Slot: ${ips.slots[0]}</span>
+      </div>`).openPopup();
+
+  map.fitBounds([[zona.lat, zona.lng],[ips.lat, ips.lng]], { padding: [60,60] });
+
+  // Panel resultado
+  document.getElementById('res-nombre').textContent = ips.nombre;
+  document.getElementById('res-address').textContent = ips.especialidades.join(' · ');
+  document.getElementById('res-dist').textContent = dist + ' km';
+  document.getElementById('res-tiempo').textContent = tiempo + ' min';
+  document.getElementById('res-score').textContent = best.score + '/100';
+  document.getElementById('res-cap').textContent = ips.capacidad + '%';
+  document.getElementById('res-slot').textContent = ips.slots[0];
+
+  // Barras
+  const proxPct = Math.max(0, 100 - dist*12);
+  const dispPct = ips.capacidad;
+  const cargaPct = Math.min(100, best.score);
+  document.getElementById('sc-prox').textContent = Math.round(proxPct) + '%';
+  document.getElementById('sc-disp').textContent = dispPct + '%';
+  document.getElementById('sc-carga').textContent = Math.round(cargaPct) + '%';
+  setTimeout(() => {
+    document.getElementById('bar-prox').style.width = proxPct + '%';
+    document.getElementById('bar-disp').style.width = dispPct + '%';
+    document.getElementById('bar-carga').style.width = cargaPct + '%';
+  }, 100);
+
+  // Alternativas
+  const altList = document.getElementById('alternatives-list');
+  altList.innerHTML = '';
+  resultados.slice(1, 4).forEach(r => {
+    const badgeClass = r.score > 70 ? 'badge-yellow' : 'badge-red';
+    const badgeText = r.score > 70 ? 'Alternativa' : 'Saturada';
+    altList.innerHTML += `
+      <div class="alt-item" onclick="seleccionarAlternativa(${r.ips.id})">
+        <div>
+          <div class="alt-name">${r.ips.nombre}</div>
+          <div class="alt-dist">${r.dist} km · ${Math.round(r.dist*4+8)} min</div>
+        </div>
+        <span class="alt-badge ${badgeClass}">${badgeText}</span>
+      </div>`;
+  });
+
+  document.getElementById('loading').classList.remove('visible');
+  document.getElementById('result-box').classList.add('visible');
+  document.getElementById('btn-asignar').disabled = false;
+
+  // Toast
+  setTimeout(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }, 600);
+}
+
+function mostrarResultadoTele(zona, especialidad) {
+  document.getElementById('res-nombre').textContent = 'Teleconsulta — Especialista disponible';
+  document.getElementById('res-address').textContent = especialidad.replace('_',' ') + ' · Videollamada desde cualquier dispositivo';
+  document.getElementById('res-dist').textContent = '0 km';
+  document.getElementById('res-tiempo').textContent = '< 5 min';
+  document.getElementById('res-score').textContent = '98/100';
+  document.getElementById('res-cap').textContent = '—';
+  document.getElementById('res-slot').textContent = SLOTS_TELECON[0];
+
+  setTimeout(() => {
+    document.getElementById('bar-prox').style.width = '100%';
+    document.getElementById('bar-disp').style.width = '95%';
+    document.getElementById('bar-carga').style.width = '98%';
+  }, 100);
+  document.getElementById('sc-prox').textContent = '100%';
+  document.getElementById('sc-disp').textContent = '95%';
+  document.getElementById('sc-carga').textContent = '98%';
+
+  const altList = document.getElementById('alternatives-list');
+  altList.innerHTML = SLOTS_TELECON.slice(1).map(s =>
+    `<div class="alt-item"><div class="alt-name">${s}</div><span class="alt-badge badge-yellow">Disponible</span></div>`
+  ).join('');
+
+  document.getElementById('loading').classList.remove('visible');
+  document.getElementById('result-box').classList.add('visible');
+  document.getElementById('btn-asignar').disabled = false;
+
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function seleccionarAlternativa(ipsId) {
+  const ips = IPS.find(i => i.id === ipsId);
+  if (!ips) return;
+  if (resultMarker) map.removeLayer(resultMarker);
+  resultMarker = L.marker([ips.lat, ips.lng], { icon: makeIcon('#f0c030', 20) })
+    .addTo(map).bindPopup(`<div class="popup-title">⭐ ${ips.nombre}</div>`).openPopup();
+  map.panTo([ips.lat, ips.lng]);
+}
+
+function resetLoading() {
+  document.getElementById('loading').classList.remove('visible');
+  document.getElementById('btn-asignar').disabled = false;
+}
+
+function resetForm() {
+  document.getElementById('result-box').classList.remove('visible');
+  if (pacienteMarker) { map.removeLayer(pacienteMarker); pacienteMarker = null; }
+  if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+  if (resultMarker) { map.removeLayer(resultMarker); resultMarker = null; }
+  map.setView([19.48, -99.10], 11);
+  document.getElementById('bar-prox').style.width = '0%';
+  document.getElementById('bar-disp').style.width = '0%';
+  document.getElementById('bar-carga').style.width = '0%';
+}
+
+// Tags toggle
+document.querySelectorAll('.tag').forEach(t => {
+  t.addEventListener('click', () => t.classList.toggle('active'));
+});
+</script>
+</body>
+</html>
