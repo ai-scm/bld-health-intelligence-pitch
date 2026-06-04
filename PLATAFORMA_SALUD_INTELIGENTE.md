@@ -102,27 +102,27 @@ PREDICCIÓN DE CRIMEN (hoy, en operación)          PREDICCIÓN DE SALUD (lo que
 ### Del heatmap de crimen al heatmap de demanda sanitaria
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                    MAPA PREDICTIVO - ZONA METROPOLITANA              │
-│                                                                      │
-│   Semana 23 · miércoles 03/06/2026 · Vista: Próximas 72 horas       │
-│                                                                      │
-│  ████████████████   ┌─────────────────────────────────────────────┐ │
-│  ██ ROJO   ████   │  PREDICCIÓN — Zona Sur-Oriente                │ │
-│  ████████████████   │                                              │ │
-│  ████  ██  ████   │  🔴 Saturación urgencias:          87%        │ │
-│  ░░░░░░░░░░░░░░░░   │  🦟 Riesgo dengue:                 91%        │ │
-│  ░░ VERDE   ░░░░   │  🩺 Diabéticos sin control HbA1c: 2.340      │ │
-│  ░░░░░░░░░░░░░░░░   │  👶 Riesgo mortalidad materna:     alto       │ │
-│                     │                                              │ │
-│  CAPAS ACTIVAS:     │  ACCIONES RECOMENDADAS:                      │ │
-│  ✅ Dengue          │  → Activar 12 teleconsultas adicionales      │ │
-│  ✅ Urgencias       │  → Redirigir 340 citas al HG Zona 18         │ │
-│  ✅ Maternidad      │  → Desplegar brigada diabéticos (jornada AM) │ │
-│  ✅ Especialistas   │  → Alerta a EPS: cupo agotado en 18h         │ │
-│                     └─────────────────────────────────────────────┘ │
-│  IPS activas: 47  │  Saturadas: 8  │  Con capacidad: 39             │
-└──────────────────────────────────────────────────────────────────────┘
+╔══════════════════════════════════════════════════════════════════════════╗
+║   🗺️  MAPA PREDICTIVO DE SALUD — ZONA METROPOLITANA                      ║
+║   Semana 23 · Miércoles 03/06/2026 · Horizonte: próximas 72 horas       ║
+╠═══════════════════════════╦══════════════════════════════════════════════╣
+║                           ║  📍 ZONA ACTIVA: SUR-ORIENTE                ║
+║  🔴 🔴 🔴 🔴 🔴 🔴       ╠══════════════════════════════════════════════╣
+║  🔴 🔴 🔴 🟠 🟠 🟡       ║  ÍNDICE DE RIESGO                           ║
+║  🔴 🔴 🟠 🟠 🟡 🟡       ║                                              ║
+║  🟠 🟠 🟠 🟡 🟡 🟢       ║  🔴 Saturación urgencias   ▓▓▓▓▓▓▓▓▓  87%  ║
+║  🟡 🟡 🟡 🟢 🟢 🟢       ║  🦟 Riesgo dengue          ▓▓▓▓▓▓▓▓▓  91%  ║
+║  🟢 🟢 🟢 🟢 🟢 🟢       ║  🩺 Diabéticos sin HbA1c   2.340 pers.      ║
+║                           ║  👶 Mortalidad materna      ALTO             ║
+║  CAPAS ACTIVAS            ╠══════════════════════════════════════════════╣
+║  ☑ Dengue / vectores      ║  ACCIONES RECOMENDADAS                      ║
+║  ☑ Saturación urgencias   ║  → Activar +12 teleconsultas                ║
+║  ☑ Riesgo materno         ║  → Redirigir 340 citas → HG Zona 18         ║
+║  ☑ Demanda especialistas  ║  → Brigada diabéticos (turno AM)             ║
+║                           ║  ⚠️  Cupo EPS se agota en ~18h              ║
+╠═══════════════════════════╩══════════════════════════════════════════════╣
+║   IPS ACTIVAS: 47          SATURADAS: 8          CON CAPACIDAD: 39      ║
+╚══════════════════════════════════════════════════════════════════════════╝
 ```
 
 **Exactamente como el agente policial ve las zonas de riesgo antes de su turno,
@@ -139,6 +139,16 @@ IMSS ──┐
 ISSSTE─┤──► Amazon HealthLake (FHIR R4) ──► Expediente único del paciente
 IPS ───┘                                      accesible desde cualquier punto
 ```
+
+> **¿Qué es FHIR R4?**
+> FHIR (*Fast Healthcare Interoperability Resources*) es el estándar internacional
+> para intercambio de datos clínicos, equivalente a lo que HTTP es para internet.
+> La versión R4 es la más adoptada globalmente (OPS, OMS, NHS, CMS-USA).
+> **"Nativo"** significa que Amazon HealthLake lo implementa directamente — no se
+> necesita un convertidor intermedio ni desarrollo extra. Un sistema que habla FHIR
+> puede leer datos de cualquier otro sistema que también hable FHIR, sin importar
+> quién lo construyó. Esto es exactamente lo que México necesita para conectar
+> IMSS, ISSSTE e IMSS-Bienestar en un solo expediente de paciente.
 
 - **Estándar:** FHIR R4 nativo en AWS — sin middleware costoso
 - **NOM-024-SSA3-2012:** Cumplimiento completo + listo para normas 2027
@@ -400,11 +410,12 @@ Analítica predictiva en salud (global):
 
 | Institución | Población | Por qué entrar ahora |
 |---|---|---|
-| **CDMX Secretaría de Salud** | 9M habitantes | Ya tiene Power BI + mandato digital; más digitalmente madura |
-| **IMSS-Bienestar** | 70M personas | Budget federal + World Bank Compact + necesidad urgente de eficiencia |
-| **ISSSTE** | 13M | Proceso de integración → necesita capa de interoperabilidad |
-| **9 Secretarías de Salud estatales** | ~40M combinado | Presupuesto propio; menos competencia que nivel federal |
-| **Redes privadas** (ÁNGELES, STAR MÉDICA) | Premium | Diferenciador de servicio; pagan bien |
+| **CDMX Secretaría de Salud** | 9M habitantes | Ya tiene Power BI activo + mandato digital en curso; comprador más maduro digitalmente |
+| **IMSS-Bienestar** | 70M personas | Presupuesto federal + compromisos World Bank Compact + necesidad crítica de eficiencia operativa |
+| **ISSSTE** | 13M personas | Proceso activo de integración con IMSS → necesita capa de interoperabilidad antes de 2027 |
+| **9 Secretarías de Salud estatales independientes** | ~40M combinado | Presupuesto propio; menor competencia que nivel federal; 23 estados ya firmaron con IMSS-Bienestar |
+
+> **Nota:** Sector privado (redes hospitalarias) queda en documento separado de validación comercial — ver `COSTOS_Y_VALIDACION.md`.
 
 ---
 
@@ -419,75 +430,84 @@ Analítica predictiva en salud (global):
 
 ## 10. MODELO COMERCIAL
 
-### Opción A — Implementación por fases (recomendada)
-
-```
-Fase 1 (Semanas 1-8)    → Expediente FHIR + Credencialización          USD ~180K
-Fase 2 (Semanas 9-16)   → Motor de asignación + georreferenciación      USD ~220K
-Fase 3 (Semanas 17-22)  → Telemedicina + App móvil                      USD ~160K
-Fase 4 (Semanas 23-28)  → Mapas predictivos ML + dashboards             USD ~140K
-Fase 5 (Semanas 29-32)  → Cámaras de compensación + go-live             USD ~100K
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-                                                          TOTAL: USD ~800K
-```
-
-### Opción B — SaaS mensual (para entidades con presupuesto fraccionado)
-
-```
-Módulo base (FHIR + asignación + app):    USD 15K/mes
-+ Telemedicina:                           USD 8K/mes
-+ Mapas predictivos ML:                   USD 12K/mes
-+ Cámaras de compensación:               USD 10K/mes
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Plataforma completa:                      USD 45K/mes
-```
-
-### Infraestructura AWS (costo operativo estimado)
-
-| Escenario | Usuarios activos/mes | Costo AWS/mes |
-|---|---|---|
-| Piloto (1 hospital / 1 municipio) | ~50K | USD 2.800 |
-| Regional (red de 20 IPS) | ~500K | USD 8.500 |
-| Nacional (IMSS-Bienestar zona) | ~5M | USD 28.000 |
-
-*Con optimizaciones FinOps (probadas en PON/ICFES): reducción 35-45% sobre costo bruto.*
+> Los modelos de precios detallados, desglose de infraestructura AWS y validación de mercado privado se encuentran en el documento de trabajo: **`COSTOS_Y_VALIDACION.md`** (pendiente de revisión interna antes de compartir con clientes).
 
 ---
 
 ## 11. GUION DE DEMO — LO QUE MOSTRAMOS EN VIVO
 
-### Escena 1: El mapa (1 minuto)
-> *"Este mapa lo tenemos hoy en producción para la Policía Nacional de Colombia.
-> Las zonas rojas predicen crimen con 89% de precisión por hora y microterritorio.
-> Ahora miren esto..."*
-> → **[Cambiar pantalla: mismo mapa, colores salud]**
-> *"Estas son sus urgencias. Este cuadrante rojo colapsa en 18 horas.
-> Sin este sistema, lo sabe cuando ya colapsó."*
+> **Nota para el presentador:** Cada escena tiene una acción visual específica.
+> Las instrucciones entre `[ ]` son indicaciones de pantalla, no texto hablado.
 
-### Escena 2: La asignación (2 minutos)
+---
+
+### Escena 1: El mapa — *"Ya lo hacemos"* (1 minuto)
+
+**[PANTALLA A — Mostrar capturas del mapa ExpertoPol en producción: cuadrículas rojo/verde, predicción 89%, turno 14:00-22:00]**
+
+> *"Este mapa está hoy en producción para la Policía Nacional de Colombia.
+> Cada cuadrícula es un microterritorio. Las rojas predicen crimen con 89% de
+> precisión, por turno, antes de que ocurra. Los agentes salen a patrullar
+> sabiendo exactamente dónde concentrarse."*
+
+**[PANTALLA B — Mostrar el mismo estilo visual pero con datos de salud: zonas rojas = hospitales saturados, zonas verdes = IPS con capacidad disponible. Puede ser una captura de Kepler.gl o QuickSight con datos de ejemplo]**
+
+> *"Ahora miren la misma tecnología aplicada a su red de salud.
+> Las zonas rojas son sus hospitales que van a saturarse en las próximas 18 horas.
+> Las verdes tienen capacidad disponible ahora mismo.
+> Sin este sistema, usted lo sabe cuando ya colapsó.
+> Con él, lo sabe esta mañana."*
+
+---
+
+### Escena 2: La asignación — *"3 segundos, cita confirmada"* (2 minutos)
+
+**[PANTALLA — Abrir la interfaz web o app del motor de asignación. Ingresar datos de un paciente ficticio: nombre, dirección en Ecatepec, diagnóstico: diabetes tipo 2 + hipertensión, especialidad requerida: endocrinología]**
+
 > *"Un paciente abre la app desde Ecatepec. Tiene diabetes, hipertensión y
-> necesita endocrinólogo. El sistema sabe qué IPS tiene cupo, a cuántos
-> kilómetros está, si puede llegar en transporte público y si el especialista
-> tiene agenda esta semana. En 3 segundos, cita confirmada."*
-> → **[Demo en vivo del motor de asignación]**
+> necesita endocrinólogo."*
+
+**[PANTALLA — Hacer clic en "Asignar" y mostrar el resultado: IPS sugerida, distancia en km, tiempo en transporte público, próximo slot disponible]**
+
+> *"El sistema sabe qué IPS tiene cupo, a cuántos kilómetros está,
+> si puede llegar en transporte público y cuándo tiene disponible al especialista.
+> En 3 segundos: cita confirmada, notificación enviada al paciente."*
+
+> **[Para este momento se requiere un entorno demo con datos sintéticos cargados —
+> coordinar con el equipo técnico antes de la presentación]**
+
+---
 
 ### Escena 3: La telemedicina inteligente (2 minutos)
-> *"El médico de guardia en Chiapas ve en su pantalla al paciente,
-> su historial FHIR completo, la transcripción en tiempo real
-> y un resumen generado por IA antes de que termine la consulta.
-> Todo queda en el expediente. No hay papel."*
 
-### Escena 4: El dashboard predictivo (1 minuto)
-> *"El secretario de salud llega el lunes y tiene esto:
-> los 8 municipios que van a necesitar brigadas de dengue esta semana,
-> las 3 IPS que van a saturarse el jueves,
-> y la proyección de demanda de especialistas para los próximos 90 días."*
+**[PANTALLA — Mostrar la interfaz del médico durante una teleconsulta: video del paciente, panel lateral con historial clínico, transcripción en tiempo real generándose automáticamente]**
+
+> *"El médico rural en Chiapas está atendiendo a un paciente.
+> Ve su historial completo — aunque nunca lo ha atendido antes.
+> La transcripción de la consulta se genera sola.
+> Cuando termina, la IA tiene el resumen listo para el expediente.
+> No hay papel. No hay doble digitación. No se pierde nada."*
+
+---
+
+### Escena 4: El dashboard del tomador de decisiones (1 minuto)
+
+**[PANTALLA — Mostrar dashboard QuickSight o Power BI con: mapa de municipios por riesgo de dengue, gráfico de proyección de saturación de urgencias, tabla de demanda de especialistas por zona y mes]**
+
+> *"El secretario de salud llega el lunes y tiene esto en su pantalla:
+> los 8 municipios que necesitan brigadas de dengue esta semana,
+> las 3 IPS que se van a saturar el jueves,
+> y la proyección de demanda de endocrinología para los próximos 90 días.
+> Datos. No intuición."*
+
+---
 
 ### Cierre (30 segundos)
-> *"No estamos vendiendo software. Estamos trayendo
-> lo que ya funciona en producción — con arquitectura AWS comprobada,
-> equipo que ya lo construyó — y lo adaptamos a su realidad.
-> ¿Cuál es su dolor más urgente hoy?"*
+
+> *"No estamos vendiendo software. Estamos trayendo lo que ya opera en producción
+> — arquitectura AWS comprobada, equipo que ya la construyó —
+> y la adaptamos a su red de salud en 6 meses, no en 3 años.
+> ¿Cuál es el dolor más urgente que tienen hoy?"*
 
 ---
 
@@ -514,6 +534,14 @@ Plataforma completa:                      USD 45K/mes
 
 ---
 
-*Documento preparado por Blend360 AI Solutions — Junio 2026*
-*Basado en arquitecturas en producción: ExpertoPol (Policía Nacional Colombia) + Plataforma Citación ICFES*
-*Contacto: [equipo comercial]*
+---
+
+> ⚠️ **BORRADOR INTERNO — NO ES UN DOCUMENTO OFICIAL**
+> Este es un documento de trabajo en revisión. Los datos de mercado, estimaciones
+> de costo y referencias técnicas deben ser validados antes de compartirse con
+> cualquier cliente o prospecto. Ver `COSTOS_Y_VALIDACION.md` para los elementos
+> pendientes de verificación.
+
+*Preparado por Blend360 AI Solutions — Junio 2026*
+*Basado en proyectos en producción: ExpertoPol (Policía Nacional Colombia) + Plataforma Citación ICFES*
+*Contacto interno: [equipo comercial]*
