@@ -505,8 +505,6 @@ Analítica predictiva en salud (global):
 
 ### Cierre
 
-**[Silencio de 3 segundos. Dejar que el mapa quede en pantalla.]**
-
 > *"¿Cuál es el dolor más urgente que tienen hoy?"*
 
 ---
