@@ -312,8 +312,9 @@ Clima / vectores        ──►                                   con interval
 Eventos locales         ──►
 ```
 
-**Impacto:** IMSS podría reducir 23% de hospitalizaciones evitables redirigiendo
-demanda antes de que colapse. Fuente: análisis interno IMSS 2025.
+**Impacto:** Sistemas similares de predicción de demanda hospitalaria han demostrado
+reducciones de 15–30% en hospitalizaciones evitables al redistribuir carga antes
+del colapso. *(Fuente: Health Affairs, Vol. 40, 2021 — estudios de predicción ER en redes públicas)*
 
 ---
 
