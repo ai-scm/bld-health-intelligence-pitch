@@ -72,7 +72,7 @@ PREDICCIÓN DE CRIMEN (hoy, en operación)          PREDICCIÓN DE SALUD (lo que
             └─────────────┬─────────────┘
                           │
             ┌─────────────▼─────────────┐
-            │  OPTIMIZACIÓN IA          │   ← Amazon Bedrock (Claude)
+            │  OPTIMIZACIÓN IA          │   ← Amazon Bedrock
             │  Casos complejos (~2%)    │     Múltiples restricciones contradictorias
             │  Excepciones clínicas     │     Historial del paciente como contexto
             └─────────────┬─────────────┘
@@ -151,7 +151,7 @@ IPS ───┘                                      accesible desde cualquier 
 
 ```
 Nivel 1 (Atención Primaria)  →  App móvil + videoconsulta (Amazon Chime SDK)
-                                + IA triage previo (Bedrock Claude)
+                                + IA triage previo (Amazon Bedrock)
                                 + Transcripción automática (Amazon Transcribe Medical)
                                 + Resumen clínico generado por IA → Expediente FHIR
 
@@ -266,7 +266,7 @@ Credencial Universal de Salud         Roles: médico / admin / IPS / EPS
 ┌───────────────────────────▼─────────────────────────────────────────────┐
 │  CAPA DE IA / ML (el diferenciador)                                     │
 │                                                                         │
-│  Amazon Bedrock (Claude) ──── Triage, resumen clínico, optimización     │
+│  Amazon Bedrock ────────────── Triage, resumen clínico, optimización     │
 │  Amazon SageMaker ──────────── Modelos predictivos (dengue, saturación) │
 │  Amazon Forecast ───────────── Demanda de citas 30/60/90 días           │
 │  Amazon Comprehend Medical ─── Extracción entidades de notas clínicas   │
@@ -498,7 +498,7 @@ Plataforma completa:                      USD 45K/mes
 | Expediente clínico FHIR | **Amazon HealthLake** | FHIR R4 nativo + ML integrado |
 | Geocodificación | **Amazon Location Service** | Dirección → GPS; ruta real puerta a puerta |
 | Motor de asignación | **AWS Step Functions + ECS** | Orquestación + Drools rules engine |
-| IA generativa | **Amazon Bedrock (Claude)** | Triage, resumen clínico, optimización excepciones |
+| IA generativa | **Amazon Bedrock** | Triage, resumen clínico, optimización excepciones |
 | Predicción demanda | **Amazon Forecast** | Series temporales médicas 30/90 días |
 | ML geoespacial | **Amazon SageMaker** | Modelos dengue, saturación, MMR |
 | NLP clínico | **Amazon Comprehend Medical** | Extracción de entidades en notas médicas |
