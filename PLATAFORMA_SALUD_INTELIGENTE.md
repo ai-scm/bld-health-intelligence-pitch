@@ -503,12 +503,11 @@ Analítica predictiva en salud (global):
 
 ---
 
-### Cierre (30 segundos)
+### Cierre
 
-> *"No estamos vendiendo software. Estamos trayendo lo que ya opera en producción
-> — arquitectura AWS comprobada, equipo que ya la construyó —
-> y la adaptamos a su red de salud en 6 meses, no en 3 años.
-> ¿Cuál es el dolor más urgente que tienen hoy?"*
+**[Silencio de 3 segundos. Dejar que el mapa quede en pantalla.]**
+
+> *"¿Cuál es el dolor más urgente que tienen hoy?"*
 
 ---
 
